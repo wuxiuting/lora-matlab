@@ -1,0 +1,47 @@
+function [Data_Real,Data_Imag,Data_Complex] = read_data(filename)
+
+fileID = fopen(filename);
+Data_Temp = fread(fileID,inf,'float32');
+
+Get_Data_Length = floor(length(Data_Temp)/2);
+
+Data_Real = zeros(Get_Data_Length,1);
+Data_Imag = zeros(Get_Data_Length,1);
+
+
+for n = 1:Get_Data_Length
+    Data_Real(n,1) = Data_Temp((n-1)*2+1,1);
+    Data_Imag(n,1) = Data_Temp(n*2,1);
+%     Data(n,1)= sqrt(Data_Real(n,1)^2+Data_Imag(n,1)^2);
+end
+Data_Complex = Data_Real + Data_Imag * 1i;
+
+% 画出原始数据波形图
+figure();
+x = 1/5000000:1/5000000:Get_Data_Length/5000000;
+y = Data_Real; 
+plot(x,y);
+
+% 找出中心频点
+P = nextpow2(Get_Data_Length);
+NFFT = 2^P;  %将时域信号补齐到2的整数次幂，以做傅里叶变换
+y = fft(Data_Complex,NFFT)/Get_Data_Length;  %双边谱
+f = 5e6/2*linspace(0,1,NFFT/2+1);  %单边谱
+figure,plot(f,2*abs(y(1:NFFT/2+1)));
+% f = 5e6*linspace(0,1,NFFT);
+% figure,plot(f,abs(y(1:NFFT)));
+title('Amplitude spectrum');
+xlabel('Frequency(Hz)');
+ylabel('|Amplitude(f)|');
+
+%画频谱图
+freq=fftshift(fft(Data_Complex));
+x_label=-Get_Data_Length/2:1:Get_Data_Length/2-1;
+ff=(x_label*5000./Get_Data_Length+433e3)/1000;
+figure,plot(ff,abs(freq));
+xlabel('Frequency(MHz)');
+figure,plot(Data_Real);
+figure,plot(abs(Data_Complex));
+% Data_Real = mapstd(Data_Real);%加上去运行慢，卡住了
+
+end
